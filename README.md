@@ -153,7 +153,7 @@ template.render([[
 
 ##### A Word About HTML Escaping
 
-Only strings are escaped, functions are called without arguments (recursively) and results are returned as is, other types are `tostring`ified. `nil`s are converted to empty strings `""`.
+Only strings are escaped, functions are called without arguments (recursively) and results are returned as is, other types are `tostring`ified. `nil`s and `box.NULL`s are converted to empty strings `""`.
 
 Escaped HTML characters:
 
@@ -245,16 +245,11 @@ You can  load templates from "sub-directories" as well with `{(syntax)}`:
 
 Just place [`template.lua`](https://github.com/bungle/lua-resty-template/blob/master/lib/resty/template.lua) and [`template`](https://github.com/bungle/lua-resty-template/tree/master/lib/resty/template) directory somewhere in your `package.path`, under `resty` directory. If you are using OpenResty, the default location would be `/usr/local/openresty/lualib/resty`.
 
-### Using OpenResty Package Manager (opm)
-
-```Shell
-$ opm get bungle/lua-resty-template
-```
 
 ### Using LuaRocks
 
 ```Shell
-$ luarocks install lua-resty-template
+$ tarantoolctl rocks install lua-resty-template
 ```
 
 LuaRocks repository for `lua-resty-template` is located at https://luarocks.org/modules/bungle/lua-resty-template.
@@ -481,13 +476,12 @@ template._ = _
 ```
 
 Then you can use `_` inside your templates. I created one example template helper that can be found from here:
-https://github.com/bungle/lua-resty-template/blob/master/lib/resty/template/html.lua
+https://github.com/tarantool/lua-resty-template/blob/master/lib/resty/template/html.lua
 
 ##### Lua
 
 ```lua
 local template = require "resty.template"
-local html = require "resty.template.html"
 
 template.render([[
 <ul>

@@ -1,14 +1,13 @@
 package = "lua-resty-template"
 version = "dev-1"
 source = {
-    url = "git://github.com/bungle/lua-resty-template.git"
+    url = "git://github.com/tarantool/lua-resty-template.git"
 }
 description = {
-    summary = "Templating Engine (HTML) for Lua and OpenResty",
-    detailed = "lua-resty-template is a compiling (HTML) templating engine for Lua and OpenResty.",
-    homepage = "https://github.com/bungle/lua-resty-template",
-    maintainer = "Aapo Talvensaari <aapo.talvensaari@gmail.com>",
-    license = "BSD"
+    summary = "Templating Engine (HTML) for Tarantool",
+    detailed = "lua-resty-template is a compiling (HTML) templating engine for Tarantool",
+    homepage = "https://github.com/tarantool/lua-resty-template",
+    license = "BSD",
 }
 dependencies = {
     "lua >= 5.1"
