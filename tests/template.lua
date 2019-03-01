@@ -1,7 +1,7 @@
 #!/usr/bin/env tarantool
 
 local tap = require('tap')
-local template = require('resty.template')
+local template = require('template')
 
 local test = tap.test('Template engine tests')
 

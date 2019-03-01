@@ -1,9 +1,4 @@
-local template = require "resty.template"
-
-local ok, new_tab = pcall(require, "table.new")
-if not ok then
-    new_tab = function() return {} end
-end
+local template = require('template')
 
 local function run(iterations)
     iterations = iterations or 1000
@@ -91,7 +86,7 @@ local function run(iterations)
 
     template.cache = {}
 
-    local views = new_tab(iterations, 0)
+    local views = table.new(iterations, 0)
     for i = 1, iterations do
         views[i] = "<h1>Iteration " .. i .. "</h1>\n" .. view
     end
@@ -118,7 +113,7 @@ local function run(iterations)
     print(format("  Execution Time: %.6f (different template, cached)", z))
     total = total + z
 
-    local contexts = new_tab(iterations, 0)
+    local contexts = table.new(iterations, 0)
 
     for i = 1, iterations do
         contexts[i] = { "Emma", "James", "Nicholas", "Mary" }
