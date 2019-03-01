@@ -1,7 +1,7 @@
 .PHONY: lint
 lint:
 	luacheck --config=.luacheckrc --no-unused-args --no-redefined \
-	                    ./lib/resty/template.lua
+	                    ./lib/template.lua
 
 .PHONY: test
 test:

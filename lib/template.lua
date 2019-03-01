@@ -1,7 +1,6 @@
 local fio = require('fio')
 
 local loadchunk
-local sub = string.sub
 
 
 local HTML_ENTITIES = {
@@ -80,7 +79,7 @@ do
                     template = template,
                     table = table,
                     ipairs = ipairs,
-                    html = require('resty.template.html'),
+                    html = require('template.html'),
                 }, context)))
     end
 end
