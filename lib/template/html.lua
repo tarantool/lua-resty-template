@@ -1,9 +1,5 @@
 local template = require('template')
-local setmetatable = setmetatable
 local escape = template.escape
-local concat = table.concat
-local pairs = pairs
-local type = type
 
 local function tag(name, content, attr)
     local r, a, content = {}, {}, content or attr
@@ -19,7 +15,7 @@ local function tag(name, content, attr)
         end
         if #a > 0 then
             r[#r + 1] = " "
-            r[#r + 1] = concat(a, " ")
+            r[#r + 1] = table.concat(a, " ")
         end
     end
     if type(content) == "string" then
@@ -31,7 +27,7 @@ local function tag(name, content, attr)
     else
         r[#r + 1] = " />"
     end
-    return concat(r)
+    return table.concat(r)
 end
 
 local html = { __index = function(_, name)

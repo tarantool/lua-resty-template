@@ -4,11 +4,8 @@ local function run(iterations)
     iterations = iterations or 1000
     local gc = collectgarbage
     local total = 0
-    local print = print
     local parse = template.parse
     local compile = template.compile
-    local clock = os.clock
-    local format = string.format
     local view = [[
     <ul>
     {% for _, v in ipairs(context) do %}
@@ -16,29 +13,29 @@ local function run(iterations)
     {% end %}
     </ul>]]
 
-    print(format("Running %d iterations in each test", iterations))
+    print(string.format("Running %d iterations in each test", iterations))
 
     gc()
     gc()
 
-    local x = clock()
+    local x = os.clock()
     for _ = 1, iterations do
         parse(view, true)
     end
-    local z = clock() - x
-    print(format("    Parsing Time: %.6f", z))
+    local z = os.clock() - x
+    print(string.format("    Parsing Time: %.6f", z))
     total = total + z
 
     gc()
     gc()
 
-    x = clock()
+    x = os.clock()
     for _ = 1, iterations do
         compile(view, nil, true)
         template.cache = {}
     end
-    z = clock() - x
-    print(format("Compilation Time: %.6f (template)", z))
+    z = os.clock() - x
+    print(string.format("Compilation Time: %.6f (template)", z))
     total = total + z
 
     compile(view, nil, true)
@@ -46,12 +43,12 @@ local function run(iterations)
     gc()
     gc()
 
-    x = clock()
+    x = os.clock()
     for _ = 1, iterations do
         compile(view, 1, true)
     end
-    z = clock() - x
-    print(format("Compilation Time: %.6f (template, cached)", z))
+    z = os.clock() - x
+    print(string.format("Compilation Time: %.6f (template, cached)", z))
     total = total + z
 
     local context = { "Emma", "James", "Nicholas", "Mary" }
@@ -61,13 +58,13 @@ local function run(iterations)
     gc()
     gc()
 
-    x = clock()
+    x = os.clock()
     for _ = 1, iterations do
         compile(view, 1, true)(context)
         template.cache = {}
     end
-    z = clock() - x
-    print(format("  Execution Time: %.6f (same template)", z))
+    z = os.clock() - x
+    print(string.format("  Execution Time: %.6f (same template)", z))
     total = total + z
 
     template.cache = {}
@@ -76,12 +73,12 @@ local function run(iterations)
     gc()
     gc()
 
-    x = clock()
+    x = os.clock()
     for _ = 1, iterations do
         compile(view, 1, true)(context)
     end
-    z = clock() - x
-    print(format("  Execution Time: %.6f (same template, cached)", z))
+    z = os.clock() - x
+    print(string.format("  Execution Time: %.6f (same template, cached)", z))
     total = total + z
 
     template.cache = {}
@@ -94,23 +91,23 @@ local function run(iterations)
     gc()
     gc()
 
-    x = clock()
+    x = os.clock()
     for i = 1, iterations do
         compile(views[i], i, true)(context)
     end
-    z = clock() - x
-    print(format("  Execution Time: %.6f (different template)", z))
+    z = os.clock() - x
+    print(string.format("  Execution Time: %.6f (different template)", z))
     total = total + z
 
     gc()
     gc()
 
-    x = clock()
+    x = os.clock()
     for i = 1, iterations do
         compile(views[i], i, true)(context)
     end
-    z = clock() - x
-    print(format("  Execution Time: %.6f (different template, cached)", z))
+    z = os.clock() - x
+    print(string.format("  Execution Time: %.6f (different template, cached)", z))
     total = total + z
 
     local contexts = table.new(iterations, 0)
@@ -124,25 +121,25 @@ local function run(iterations)
     gc()
     gc()
 
-    x = clock()
+    x = os.clock()
     for i = 1, iterations do
         compile(views[i], i, true)(contexts[i])
     end
-    z = clock() - x
-    print(format("  Execution Time: %.6f (different template, different context)", z))
+    z = os.clock() - x
+    print(string.format("  Execution Time: %.6f (different template, different context)", z))
     total = total + z
 
     gc()
     gc()
 
-    x = clock()
+    x = os.clock()
     for i = 1, iterations do
         compile(views[i], i, true)(contexts[i])
     end
-    z = clock() - x
-    print(format("  Execution Time: %.6f (different template, different context, cached)", z))
+    z = os.clock() - x
+    print(string.format("  Execution Time: %.6f (different template, different context, cached)", z))
     total = total + z
-    print(format("      Total Time: %.6f", total))
+    print(string.format("      Total Time: %.6f", total))
 end
 
 return {

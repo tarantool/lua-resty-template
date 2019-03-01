@@ -1,17 +1,6 @@
 local fio = require('fio')
 
-local setmetatable = setmetatable
 local loadchunk
-local tostring = tostring
-local concat = table.concat
-local assert = assert
-local open = fio.open
-local load = load
-local type = type
-local dump = string.dump
-local find = string.find
-local gsub = string.gsub
-local byte = string.byte
 local sub = string.sub
 
 
@@ -41,13 +30,9 @@ local template = table.new(0, 12)
 template._VERSION = "1.9"
 template.cache    = {}
 
-local function trim(s)
-    return gsub(gsub(s, "^%s+", ""), "%s+$", "")
-end
-
 local function rpos(view, s)
     while s > 0 do
-        local c = sub(view, s, s)
+        local c = string.sub(view, s, s)
         if c == " " or c == "\t" or c == "\0" or c == "\x0B" then
             s = s - 1
         else
@@ -58,8 +43,8 @@ local function rpos(view, s)
 end
 
 local function escaped(view, s)
-    if s > 1 and sub(view, s - 1, s - 1) == "\\" then
-        if s > 2 and sub(view, s - 2, s - 2) == "\\" then
+    if s > 1 and string.sub(view, s - 1, s - 1) == "\\" then
+        if s > 2 and string.sub(view, s - 2, s - 2) == "\\" then
             return false, 1
         else
             return true, 1
@@ -69,7 +54,7 @@ local function escaped(view, s)
 end
 
 local function readfile(path)
-    local file = open(path, {'O_RDONLY'})
+    local file = fio.open(path, {'O_RDONLY'})
     if not file then return nil end
     local content = file:read()
     file:close()
@@ -113,8 +98,8 @@ end
 
 function template.escape(s, c)
     if type(s) == "string" then
-        if c then return gsub(s, "[}{\">/<'&]", CODE_ENTITIES) end
-        return gsub(s, "[\">/<'&]", HTML_ENTITIES)
+        if c then return string.gsub(s, "[}{\">/<'&]", CODE_ENTITIES) end
+        return string.gsub(s, "[\">/<'&]", HTML_ENTITIES)
     end
     return template.output(s)
 end
@@ -161,9 +146,9 @@ function template.new(view, layout)
 end
 
 function template.precompile(view, path, strip)
-    local chunk = dump(template.compile(view), strip ~= false)
+    local chunk = string.dump(template.compile(view), strip ~= false)
     if path then
-        local file = open(path, {'O_WRONLY'})
+        local file = fio.open(path, {'O_WRONLY'})
         file:write(chunk)
         file:close()
     end
@@ -187,7 +172,7 @@ function template.parse(view, plain)
     assert(view, "view was not provided for template.parse(view, plain).")
     if not plain then
         view = template.load(view)
-        if byte(view, 1, 1) == 27 then return view end
+        if string.byte(view, 1, 1) == 27 then return view end
     end
     local j = 2
     local c = {[[
@@ -195,16 +180,16 @@ context=... or {}
 local function include(v, c) return template.compile(v)(c or context) end
 local ___,blocks,layout={},{}
 ]] }
-    local i, s = 1, find(view, "{", 1, true)
+    local i, s = 1, string.find(view, "{", 1, true)
     while s do
-        local t, p = sub(view, s + 1, s + 1), s + 2
+        local t, p = string.sub(view, s + 1, s + 1), s + 2
         if t == "{" then
-            local e = find(view, "}}", p, true)
+            local e = string.find(view, "}}", p, true)
             if e then
                 local z, w = escaped(view, s)
                 if i < s - w then
                     c[j] = "___[#___+1]=[=[\n"
-                    c[j+1] = sub(view, i, s - 1 - w)
+                    c[j+1] = string.sub(view, i, s - 1 - w)
                     c[j+2] = "]=]\n"
                     j=j+3
                 end
@@ -212,19 +197,19 @@ local ___,blocks,layout={},{}
                     i = s
                 else
                     c[j] = "___[#___+1]=template.escape("
-                    c[j+1] = trim(sub(view, p, e - 1))
+                    c[j+1] = string.strip(string.sub(view, p, e - 1))
                     c[j+2] = ")\n"
                     j=j+3
                     s, i = e + 1, e + 2
                 end
             end
         elseif t == "*" then
-            local e = find(view, "*}", p, true)
+            local e = string.find(view, "*}", p, true)
             if e then
                 local z, w = escaped(view, s)
                 if i < s - w then
                     c[j] = "___[#___+1]=[=[\n"
-                    c[j+1] = sub(view, i, s - 1 - w)
+                    c[j+1] = string.sub(view, i, s - 1 - w)
                     c[j+2] = "]=]\n"
                     j=j+3
                 end
@@ -232,67 +217,67 @@ local ___,blocks,layout={},{}
                     i = s
                 else
                     c[j] = "___[#___+1]=template.output("
-                    c[j+1] = trim(sub(view, p, e - 1))
+                    c[j+1] = string.strip(string.sub(view, p, e - 1))
                     c[j+2] = ")\n"
                     j=j+3
                     s, i = e + 1, e + 2
                 end
             end
         elseif t == "%" then
-            local e = find(view, "%}", p, true)
+            local e = string.find(view, "%}", p, true)
             if e then
                 local z, w = escaped(view, s)
                 if z then
                     if i < s - w then
                         c[j] = "___[#___+1]=[=[\n"
-                        c[j+1] = sub(view, i, s - 1 - w)
+                        c[j+1] = string.sub(view, i, s - 1 - w)
                         c[j+2] = "]=]\n"
                         j=j+3
                     end
                     i = s
                 else
                     local n = e + 2
-                    if sub(view, n, n) == "\n" then
+                    if string.sub(view, n, n) == "\n" then
                         n = n + 1
                     end
                     local r = rpos(view, s - 1)
                     if i <= r then
                         c[j] = "___[#___+1]=[=[\n"
-                        c[j+1] = sub(view, i, r)
+                        c[j+1] = string.sub(view, i, r)
                         c[j+2] = "]=]\n"
                         j=j+3
                     end
-                    c[j] = trim(sub(view, p, e - 1))
+                    c[j] = string.strip(string.sub(view, p, e - 1))
                     c[j+1] = "\n"
                     j=j+2
                     s, i = n - 1, n
                 end
             end
         elseif t == "(" then
-            local e = find(view, ")}", p, true)
+            local e = string.find(view, ")}", p, true)
             if e then
                 local z, w = escaped(view, s)
                 if i < s - w then
                     c[j] = "___[#___+1]=[=[\n"
-                    c[j+1] = sub(view, i, s - 1 - w)
+                    c[j+1] = string.sub(view, i, s - 1 - w)
                     c[j+2] = "]=]\n"
                     j=j+3
                 end
                 if z then
                     i = s
                 else
-                    local f = sub(view, p, e - 1)
-                    local x = find(f, ",", 2, true)
+                    local f = string.sub(view, p, e - 1)
+                    local x = string.find(f, ",", 2, true)
                     if x then
                         c[j] = "___[#___+1]=include([=["
-                        c[j+1] = trim(sub(f, 1, x - 1))
+                        c[j+1] = string.strip(string.sub(f, 1, x - 1))
                         c[j+2] = "]=],"
-                        c[j+3] = trim(sub(f, x + 1))
+                        c[j+3] = string.strip(string.sub(f, x + 1))
                         c[j+4] = ")\n"
                         j=j+5
                     else
                         c[j] = "___[#___+1]=include([=["
-                        c[j+1] = trim(f)
+                        c[j+1] = string.strip(f)
                         c[j+2] = "]=])\n"
                         j=j+3
                     end
@@ -300,12 +285,12 @@ local ___,blocks,layout={},{}
                 end
             end
         elseif t == "[" then
-            local e = find(view, "]}", p, true)
+            local e = string.find(view, "]}", p, true)
             if e then
                 local z, w = escaped(view, s)
                 if i < s - w then
                     c[j] = "___[#___+1]=[=[\n"
-                    c[j+1] = sub(view, i, s - 1 - w)
+                    c[j+1] = string.sub(view, i, s - 1 - w)
                     c[j+2] = "]=]\n"
                     j=j+3
                 end
@@ -313,22 +298,22 @@ local ___,blocks,layout={},{}
                     i = s
                 else
                     c[j] = "___[#___+1]=include("
-                    c[j+1] = trim(sub(view, p, e - 1))
+                    c[j+1] = string.strip(string.sub(view, p, e - 1))
                     c[j+2] = ")\n"
                     j=j+3
                     s, i = e + 1, e + 2
                 end
             end
         elseif t == "-" then
-            local e = find(view, "-}", p, true)
+            local e = string.find(view, "-}", p, true)
             if e then
-                local x, y = find(view, sub(view, s, e + 1), e + 2, true)
+                local x, y = string.find(view, string.sub(view, s, e + 1), e + 2, true)
                 if x then
                     local z, w = escaped(view, s)
                     if z then
                         if i < s - w then
                             c[j] = "___[#___+1]=[=[\n"
-                            c[j+1] = sub(view, i, s - 1 - w)
+                            c[j+1] = string.sub(view, i, s - 1 - w)
                             c[j+2] = "]=]\n"
                             j=j+3
                         end
@@ -336,36 +321,36 @@ local ___,blocks,layout={},{}
                     else
                         y = y + 1
                         x = x - 1
-                        if sub(view, y, y) == "\n" then
+                        if string.sub(view, y, y) == "\n" then
                             y = y + 1
                         end
-                        local b = trim(sub(view, p, e - 1))
+                        local b = string.strip(string.sub(view, p, e - 1))
                         if b == "verbatim" or b == "raw" then
                             if i < s - w then
                                 c[j] = "___[#___+1]=[=[\n"
-                                c[j+1] = sub(view, i, s - 1 - w)
+                                c[j+1] = string.sub(view, i, s - 1 - w)
                                 c[j+2] = "]=]\n"
                                 j=j+3
                             end
                             c[j] = "___[#___+1]=[=["
-                            c[j+1] = sub(view, e + 2, x)
+                            c[j+1] = string.sub(view, e + 2, x)
                             c[j+2] = "]=]\n"
                             j=j+3
                         else
-                            if sub(view, x, x) == "\n" then
+                            if string.sub(view, x, x) == "\n" then
                                 x = x - 1
                             end
                             local r = rpos(view, s - 1)
                             if i <= r then
                                 c[j] = "___[#___+1]=[=[\n"
-                                c[j+1] = sub(view, i, r)
+                                c[j+1] = string.sub(view, i, r)
                                 c[j+2] = "]=]\n"
                                 j=j+3
                             end
                             c[j] = 'blocks["'
                             c[j+1] = b
                             c[j+2] = '"]=include[=['
-                            c[j+3] = sub(view, e + 2, x)
+                            c[j+3] = string.sub(view, e + 2, x)
                             c[j+4] = "]=]\n"
                             j=j+5
                         end
@@ -374,12 +359,12 @@ local ___,blocks,layout={},{}
                 end
             end
         elseif t == "#" then
-            local e = find(view, "#}", p, true)
+            local e = string.find(view, "#}", p, true)
             if e then
                 local z, w = escaped(view, s)
                 if i < s - w then
                     c[j] = "___[#___+1]=[=[\n"
-                    c[j+1] = sub(view, i, s - 1 - w)
+                    c[j+1] = string.sub(view, i, s - 1 - w)
                     c[j+2] = "]=]\n"
                     j=j+3
                 end
@@ -387,16 +372,16 @@ local ___,blocks,layout={},{}
                     i = s
                 else
                     e = e + 2
-                    if sub(view, e, e) == "\n" then
+                    if string.sub(view, e, e) == "\n" then
                         e = e + 1
                     end
                     s, i = e - 1, e
                 end
             end
         end
-        s = find(view, "{", s + 1, true)
+        s = string.find(view, "{", s + 1, true)
     end
-    s = sub(view, i)
+    s = string.sub(view, i)
     if s and s ~= "" then
         c[j] = "___[#___+1]=[=[\n"
         c[j+1] = s
@@ -405,7 +390,7 @@ local ___,blocks,layout={},{}
     end
     c[j] = "return layout and include(layout,setmetatable({view=table.concat(___),blocks=blocks},\
                                                           {__index=context})) or table.concat(___)"
-    return concat(c)
+    return table.concat(c)
 end
 
 function template.render(view, context, key, plain)
