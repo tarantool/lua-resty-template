@@ -14,6 +14,8 @@ local template = require "template"
 -- Using template.new
 local view = template.new "view.html"
 view.message = "Hello, World!"
+-- render by default print rendered template to stdout
+-- use "compile" that returns result as string
 view:render()
 -- Using template.render
 template.render("view.html", { message = "Hello, World!" })
@@ -43,13 +45,14 @@ The same can be done with inline template string:
 
 ```lua
 -- Using template string
-template.render([[
+local result = template.compile([[
 <!DOCTYPE html>
 <html>
 <body>
   <h1>{{message}}</h1>
 </body>
-</html>]], { message = "Hello, World!" })
+</html>]])({ message = "Hello, World!" })
+print(result)
 ```
 
 ## Contents
@@ -264,7 +267,7 @@ $ tarantoolctl rocks install template
 This function enables or disables template caching, or if no parameters are passed, returns current state of template caching. By default template caching is enabled, but you may want to disable it on development or low-memory situations.
 
 ```lua
-local template = require "template"   
+local template = require("template")  
 -- Get current state of template caching
 local enabled = template.caching()
 -- Disable template caching
@@ -297,8 +300,8 @@ local view = template.new([[<h1>{{message}}</h1>]], [[
 
 ##### Example
 ```lua
-local template = require "template"
-local view = template.new"view.html"
+local template = require("template")
+local view = template.new("view.html")
 view.message  = "Hello, World!"
 view:render()
 -- You may also replace context on render
@@ -331,7 +334,7 @@ Also note the second return value which is a boolean. You may discard it, or use
 
 #### template.render(view, context, key, plain)
 
-Parses, compiles, caches (if caching is enabled) and outputs template either with `ngx.print` if available, or `print`. You may optionally also pass `key` that is used as a cache key. If `plain` evaluates to `true`, the `view` is considered to be plain string template (`template.load` and binary chunk detection is skipped on `template.parse`).
+Parses, compiles, caches (if caching is enabled) and outputs template either with `io.write` if available, or `print`. You may optionally also pass `key` that is used as a cache key. If `plain` evaluates to `true`, the `view` is considered to be plain string template (`template.load` and binary chunk detection is skipped on `template.parse`).
 
 ```lua
 template.render("template.html", { message = "Hello, World!" })          -- or
@@ -407,7 +410,7 @@ template.load = function(s) return s end
 
 #### template.print
 
-This field contains a function that is used on `template.render()` or `template.new("example.html"):render()` to output the results. By default this holds either `ngx.print` (if available) or `print`. You may want to (and are allowed to) overwrite this field, if you want to use your own output function instead. This is also useful if you are using some other framework, e.g. Turbo.lua (http://turbolua.org/).
+This field contains a function that is used on `template.render()` or `template.new("example.html"):render()` to output the results. By default this holds either `io.write`. You may want to (and are allowed to) overwrite this field, if you want to use your own output function instead. This is also useful if you are using some other framework, e.g. Turbo.lua (http://turbolua.org/).
 
 ```lua
 local template = require "template"
