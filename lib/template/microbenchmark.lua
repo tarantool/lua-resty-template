@@ -6,6 +6,7 @@ local function run(iterations)
     local total = 0
     local parse = template.parse
     local compile = template.compile
+
     local view = [[
     <ul>
     {% for _, v in ipairs(context) do %}

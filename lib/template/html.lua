@@ -2,7 +2,8 @@ local template = require('template')
 local escape = template.escape
 
 local function tag(name, content, attr)
-    local r, a, content = {}, {}, content or attr
+    local r, a = {}, {}
+    content = content or attr
     r[#r + 1] = "<"
     r[#r + 1] = name
     if attr then
