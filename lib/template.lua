@@ -2,7 +2,6 @@ local fio = require('fio')
 
 local loadchunk
 
-
 local HTML_ENTITIES = {
     ["&"] = "&amp;",
     ["<"] = "&lt;",
@@ -23,16 +22,34 @@ local CODE_ENTITIES = {
     ["/"] = "&#47;"
 }
 
+local ESC    = string.byte("\27")
+local NUL    = string.byte("\0")
+local HT     = string.byte("\t")
+local VT     = string.byte("\v")
+local LF     = string.byte("\n")
+local SOL    = string.byte("/")     -- luacheck: ignore
+local BSOL   = string.byte("\\")
+local SP     = string.byte(" ")
+local AST    = string.byte("*")
+local NUM    = string.byte("#")
+local LPAR   = string.byte("(")
+local LSQB   = string.byte("[")
+local LCUB   = string.byte("{")
+local MINUS  = string.byte("-")
+local PERCNT = string.byte("%")
+
+local EMPTY  = ""
+
 local caching = true
 local template = table.new(0, 12)
 
-template._VERSION = "1.9"
+template._VERSION = "2.0"
 template.cache    = {}
 
 local function rpos(view, s)
     while s > 0 do
-        local c = string.sub(view, s, s)
-        if c == " " or c == "\t" or c == "\0" or c == "\x0B" then
+        local c = string.byte(view, s, s)
+        if c == SP or c == HT or c == VT or c == NUL then
             s = s - 1
         else
             break
@@ -42,8 +59,8 @@ local function rpos(view, s)
 end
 
 local function escaped(view, s)
-    if s > 1 and string.sub(view, s - 1, s - 1) == "\\" then
-        if s > 2 and string.sub(view, s - 2, s - 2) == "\\" then
+    if s > 1 and string.byte(view, s - 1, s - 1) == BSOL then
+        if s > 2 and string.byte(view, s - 2, s - 2) == BSOL then
             return false, 1
         else
             return true, 1
@@ -90,7 +107,7 @@ function template.caching(enable)
 end
 
 function template.output(s)
-    if s == nil then return "" end
+    if s == nil then return EMPTY end
     if type(s) == "function" then return template.output(s()) end
     return tostring(s)
 end
@@ -109,11 +126,11 @@ function template.new(view, layout)
     if layout then
         if type(layout) == "table" then
             return setmetatable({ render = function(self, context)
-                local context = context or self
+                context = context or self
                 context.blocks = context.blocks or {}
                 context.view = compile(view)(context)
                 layout.blocks = context.blocks or {}
-                layout.view = context.view or ""
+                layout.view = context.view or EMPTY
                 return layout:render()
             end }, { __tostring = function(self)
                 local context = self
@@ -125,7 +142,7 @@ function template.new(view, layout)
             end })
         else
             return setmetatable({ render = function(self, context)
-                local context = context or self
+                context = context or self
                 context.blocks = context.blocks or {}
                 context.view = compile(view)(context)
                 return render(layout, context)
@@ -171,7 +188,7 @@ function template.parse(view, plain)
     assert(view, "view was not provided for template.parse(view, plain).")
     if not plain then
         view = template.load(view)
-        if string.byte(view, 1, 1) == 27 then return view end
+        if string.byte(view, 1, 1) == ESC then return view end
     end
     local j = 2
     local c = {[[
@@ -181,8 +198,8 @@ local ___,blocks,layout={},{}
 ]] }
     local i, s = 1, string.find(view, "{", 1, true)
     while s do
-        local t, p = string.sub(view, s + 1, s + 1), s + 2
-        if t == "{" then
+        local t, p = string.byte(view, s + 1, s + 1), s + 2
+        if t == LCUB then
             local e = string.find(view, "}}", p, true)
             if e then
                 local z, w = escaped(view, s)
@@ -202,7 +219,7 @@ local ___,blocks,layout={},{}
                     s, i = e + 1, e + 2
                 end
             end
-        elseif t == "*" then
+        elseif t == AST then
             local e = string.find(view, "*}", p, true)
             if e then
                 local z, w = escaped(view, s)
@@ -222,7 +239,7 @@ local ___,blocks,layout={},{}
                     s, i = e + 1, e + 2
                 end
             end
-        elseif t == "%" then
+        elseif t == PERCNT then
             local e = string.find(view, "%}", p, true)
             if e then
                 local z, w = escaped(view, s)
@@ -236,7 +253,7 @@ local ___,blocks,layout={},{}
                     i = s
                 else
                     local n = e + 2
-                    if string.sub(view, n, n) == "\n" then
+                    if string.byte(view, n, n) == LF then
                         n = n + 1
                     end
                     local r = rpos(view, s - 1)
@@ -252,7 +269,7 @@ local ___,blocks,layout={},{}
                     s, i = n - 1, n
                 end
             end
-        elseif t == "(" then
+        elseif t == LPAR then
             local e = string.find(view, ")}", p, true)
             if e then
                 local z, w = escaped(view, s)
@@ -283,7 +300,7 @@ local ___,blocks,layout={},{}
                     s, i = e + 1, e + 2
                 end
             end
-        elseif t == "[" then
+        elseif t == LSQB then
             local e = string.find(view, "]}", p, true)
             if e then
                 local z, w = escaped(view, s)
@@ -303,7 +320,7 @@ local ___,blocks,layout={},{}
                     s, i = e + 1, e + 2
                 end
             end
-        elseif t == "-" then
+        elseif t == MINUS then
             local e = string.find(view, "-}", p, true)
             if e then
                 local x, y = string.find(view, string.sub(view, s, e + 1), e + 2, true)
@@ -320,7 +337,7 @@ local ___,blocks,layout={},{}
                     else
                         y = y + 1
                         x = x - 1
-                        if string.sub(view, y, y) == "\n" then
+                        if string.byte(view, y, y) == LF then
                             y = y + 1
                         end
                         local b = string.strip(string.sub(view, p, e - 1))
@@ -336,7 +353,7 @@ local ___,blocks,layout={},{}
                             c[j+2] = "]=]\n"
                             j=j+3
                         else
-                            if string.sub(view, x, x) == "\n" then
+                            if string.byte(view, x, x) == LF then
                                 x = x - 1
                             end
                             local r = rpos(view, s - 1)
@@ -357,7 +374,7 @@ local ___,blocks,layout={},{}
                     end
                 end
             end
-        elseif t == "#" then
+        elseif t == NUM then
             local e = string.find(view, "#}", p, true)
             if e then
                 local z, w = escaped(view, s)
@@ -371,7 +388,7 @@ local ___,blocks,layout={},{}
                     i = s
                 else
                     e = e + 2
-                    if string.sub(view, e, e) == "\n" then
+                    if string.byte(view, e, e) == LF then
                         e = e + 1
                     end
                     s, i = e - 1, e
@@ -381,14 +398,13 @@ local ___,blocks,layout={},{}
         s = string.find(view, "{", s + 1, true)
     end
     s = string.sub(view, i)
-    if s and s ~= "" then
+    if s and s ~= EMPTY then
         c[j] = "___[#___+1]=[=[\n"
         c[j+1] = s
         c[j+2] = "]=]\n"
         j=j+3
     end
-    c[j] = "return layout and include(layout,setmetatable({view=table.concat(___),blocks=blocks},\
-                                                          {__index=context})) or table.concat(___)"
+    c[j] = "return layout and include(layout,setmetatable({view=table.concat(___),blocks=blocks},{__index=context})) or table.concat(___)" -- luacheck: ignore
     return table.concat(c)
 end
 
