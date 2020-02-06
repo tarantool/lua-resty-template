@@ -195,6 +195,13 @@ function template.parse(view, plain)
 context=... or {}
 local function include(v, c) return template.compile(v)(c or context) end
 local ___,blocks,layout={},{}
+local function echo(...) 
+    local args = {...}
+    for i=1,select("#", ...) do 
+        args[i] = tostring(args[i])
+    end
+    ___[#___+1] = table.concat(args) 
+end
 ]] }
     local i, s = 1, string.find(view, "{", 1, true)
     while s do
