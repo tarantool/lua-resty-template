@@ -16,6 +16,7 @@ build = {
     type = "builtin",
     modules = {
         ["template"]                = "lib/template.lua",
+        ["template.safe"]           = "lib/template/safe.lua",
         ["template.html"]           = "lib/template/html.lua",
         ["template.microbenchmark"] = "lib/template/microbenchmark.lua"
     }
