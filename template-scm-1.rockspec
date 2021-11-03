@@ -1,7 +1,7 @@
 package = "template"
 version = "scm-1"
 source = {
-    url = "git://github.com/tarantool/template.git"
+    url = "git+https://github.com/tarantool/template.git"
 }
 description = {
     summary = "Templating Engine (HTML) for Tarantool",
